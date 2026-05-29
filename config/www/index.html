@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no" />
 <meta charset="UTF-8" />
 <link rel="shortcut icon" href="favicon.ico">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="text/javascript" src="speedtest.js"></script>
 <script type="text/javascript">
 function I(i){return document.getElementById(i);}
@@ -30,14 +30,42 @@ function drawMeter(c,amount,bk,fg,progress,prog){
 		c.width=cw;
 		c.height=ch;
 	}
+
+    var centerX = c.width/2;
+    var centerY = c.height - 58*sizScale;
+    var radius = c.height/1.8 - 6*sizScale;
+    var startAngle = -Math.PI*1.1;
+    var endAngle = Math.PI*0.1;
+    var totalAngle = endAngle - startAngle;
     
+    // Draw Speedometer Ticks
+    ctx.lineWidth = 2*sizScale;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+    for (var i = 0; i <= 10; i++) {
+        var angle = startAngle + (totalAngle * (i / 10));
+        var innerRadius = radius - 15*sizScale;
+        var outerRadius = radius - 5*sizScale;
+        if (i % 5 === 0) {
+            innerRadius = radius - 20*sizScale;
+            ctx.lineWidth = 3*sizScale;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        } else {
+            ctx.lineWidth = 2*sizScale;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        }
+        ctx.beginPath();
+        ctx.moveTo(centerX + innerRadius * Math.cos(angle), centerY + innerRadius * Math.sin(angle));
+        ctx.lineTo(centerX + outerRadius * Math.cos(angle), centerY + outerRadius * Math.sin(angle));
+        ctx.stroke();
+    }
+
     // Draw background track
 	ctx.beginPath();
 	ctx.strokeStyle=bk;
 	ctx.lineWidth=6*sizScale; // Thinner elegant line
     ctx.lineCap="round";
     ctx.shadowBlur=0;
-	ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,Math.PI*0.1);
+	ctx.arc(centerX,centerY,radius,startAngle,endAngle);
 	ctx.stroke();
 
     // Draw active track with glow
@@ -48,7 +76,7 @@ function drawMeter(c,amount,bk,fg,progress,prog){
     // Add glow effect
     ctx.shadowBlur=20*sizScale;
     ctx.shadowColor=fg;
-	ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,amount*Math.PI*1.2-Math.PI*1.1);
+	ctx.arc(centerX,centerY,radius,startAngle,startAngle + amount*totalAngle);
 	ctx.stroke();
     
     // Reset shadow
@@ -68,6 +96,36 @@ function format(d){
     if(d<10) return d.toFixed(2);
     if(d<100) return d.toFixed(1);
     return d.toFixed(0);
+}
+
+function formatSpeed(d) {
+    var bits = Number(d); // Mbps
+    var bytes = bits / 8; // MB/s
+    
+    var bitUnit = "Mbps";
+    if (bits >= 1000) {
+        bits = bits / 1000;
+        bitUnit = "Gbps";
+    } else if (bits > 0 && bits < 1) {
+        bits = bits * 1000;
+        bitUnit = "Kbps";
+    }
+
+    var byteUnit = "MB/s";
+    if (bytes >= 1000) {
+        bytes = bytes / 1000;
+        byteUnit = "GB/s";
+    } else if (bytes > 0 && bytes < 1) {
+        bytes = bytes * 1000;
+        byteUnit = "KB/s";
+    }
+
+    return {
+        bitsStr: (bits === 0) ? "0.00" : bits.toFixed(bits >= 100 ? 0 : (bits >= 10 ? 1 : 2)),
+        bitUnit: bitUnit,
+        bytesStr: (bytes === 0) ? "0.00" : bytes.toFixed(bytes >= 100 ? 0 : (bytes >= 10 ? 1 : 2)),
+        byteUnit: byteUnit
+    };
 }
 
 //UI CODE
@@ -110,10 +168,33 @@ function updateUI(forced){
 	if(uiData==null) return;
 	var status=uiData.testState;
 	I("ip").textContent=uiData.clientIp;
-	I("dlText").textContent=(status==1&&uiData.dlStatus==0)?"...":format(uiData.dlStatus);
+
+    // Download format
+    if (status == 1 && uiData.dlStatus == 0) {
+        I("dlText").textContent = "...";
+        I("dlUnit").textContent = "Mbps";
+        I("dlBytes").textContent = "";
+    } else {
+        var dlFmt = formatSpeed(uiData.dlStatus);
+        I("dlText").textContent = dlFmt.bitsStr;
+        I("dlUnit").textContent = dlFmt.bitUnit;
+        I("dlBytes").textContent = dlFmt.bytesStr + " " + dlFmt.byteUnit;
+    }
 	drawMeter(I("dlMeter"),mbpsToAmount(Number(uiData.dlStatus*(status==1?oscillate():1))),meterBk,dlColor,Number(uiData.dlProgress),progColor);
-	I("ulText").textContent=(status==3&&uiData.ulStatus==0)?"...":format(uiData.ulStatus);
+
+    // Upload format
+    if (status == 3 && uiData.ulStatus == 0) {
+        I("ulText").textContent = "...";
+        I("ulUnit").textContent = "Mbps";
+        I("ulBytes").textContent = "";
+    } else {
+        var ulFmt = formatSpeed(uiData.ulStatus);
+        I("ulText").textContent = ulFmt.bitsStr;
+        I("ulUnit").textContent = ulFmt.bitUnit;
+        I("ulBytes").textContent = ulFmt.bytesStr + " " + ulFmt.byteUnit;
+    }
 	drawMeter(I("ulMeter"),mbpsToAmount(Number(uiData.ulStatus*(status==3?oscillate():1))),meterBk,ulColor,Number(uiData.ulProgress),progColor);
+
 	I("pingText").textContent=format(uiData.pingStatus);
 	I("jitText").textContent=format(uiData.jitterStatus);
 }
@@ -130,7 +211,11 @@ function initUI(){
 	drawMeter(I("dlMeter"),0,meterBk,dlColor,0);
 	drawMeter(I("ulMeter"),0,meterBk,ulColor,0);
 	I("dlText").textContent="";
+    I("dlUnit").textContent="Mbps";
+    I("dlBytes").textContent="";
 	I("ulText").textContent="";
+    I("ulUnit").textContent="Mbps";
+    I("ulBytes").textContent="";
 	I("pingText").textContent="";
 	I("jitText").textContent="";
 	I("ip").textContent="";
@@ -161,12 +246,20 @@ function initUI(){
 		-moz-osx-font-smoothing: grayscale;
 	}
 
-	h1 {
-		font-weight: 700;
-		font-size: 1.8em;
+	.glow-title {
+		font-weight: 800;
+		font-size: 2.5em;
 		letter-spacing: -0.05em;
-		margin: 2em 0;
-		color: var(--text-main);
+		margin: 1.5em 0;
+		color: transparent;
+        background: linear-gradient(90deg, #00e5ff, #b000ff);
+        background-clip: text;
+        -webkit-background-clip: text;
+        text-shadow: 0 0 20px rgba(176, 0, 255, 0.3);
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 0.3em;
 	}
 
 	#testWrapper {
@@ -330,17 +423,38 @@ function initUI(){
 		position: absolute;
 		bottom: 1.5em;
 		z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
 	}
+    
+    .gauge-container .bits-container {
+        display: flex;
+        align-items: baseline;
+        gap: 0.3em;
+    }
 
 	.gauge-container .stat-value {
 		font-size: 2.8em;
 		font-weight: 400;
 	}
+    
+    .gauge-container .stat-value:empty::before {
+		content: "0.00";
+		color: rgba(255, 255, 255, 0.2);
+	}
 
 	.gauge-container .unit {
-		position: absolute;
-		bottom: -0.2em;
+        position: relative;
+        bottom: 0.1em;
 	}
+
+    .gauge-container .bytes-value {
+        font-size: 0.85em;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-top: 0.2em;
+    }
 
 	#ipArea {
 		margin-top: 3.5em;
@@ -394,6 +508,11 @@ function initUI(){
 		max-width: 100%;
 		border-radius: 8px;
 		border: 1px solid var(--card-border);
+        /* 
+           This CSS filter will invert the light background to dark, 
+           and preserve the hue, resulting in a dark-mode share image! 
+        */
+        filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.1);
 	}
 
 	.footer-links {
@@ -483,11 +602,11 @@ function initUI(){
 		}
 	}
 </style>
-<title>LibreSpeed</title>
+<title>BroMN Speed Test</title>
 </head>
 <body>
 
-<h1>LibreSpeed</h1>
+<h1 class="glow-title">⚡ BroMN Speed Test</h1>
 
 <div id="testWrapper">
 	<div class="app-container">
@@ -519,17 +638,23 @@ function initUI(){
 					<div class="label">Download</div>
 					<canvas id="dlMeter"></canvas>
 					<div class="value-container">
-						<div id="dlText" class="stat-value"></div>
+                        <div class="bits-container">
+                            <div id="dlText" class="stat-value"></div>
+                            <div id="dlUnit" class="unit">Mbps</div>
+                        </div>
+                        <div id="dlBytes" class="bytes-value"></div>
 					</div>
-					<div class="unit">Mbps</div>
 				</div>
 				<div class="gauge-container">
 					<div class="label">Upload</div>
 					<canvas id="ulMeter"></canvas>
 					<div class="value-container">
-						<div id="ulText" class="stat-value"></div>
+						<div class="bits-container">
+                            <div id="ulText" class="stat-value"></div>
+                            <div id="ulUnit" class="unit">Mbps</div>
+                        </div>
+                        <div id="ulBytes" class="bytes-value"></div>
 					</div>
-					<div class="unit">Mbps</div>
 				</div>
 			</div>
 
