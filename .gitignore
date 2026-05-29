@@ -1,0 +1,13 @@
+# Abaikan semua data di dalam folder config kecuali struktur dasarnya
+config/keys/
+config/log/
+config/nginx/
+config/php/
+config/.migrations
+
+# Abaikan backup database SQL agar password/data hasil test tidak bocor ke Git
+*.sql
+config/**/*.sql
+
+# Jika Anda nanti mengubah file index.html di www, kita tetap ingin menyimpannya,
+# tapi abaikan jika ada file temporary/log di dalam www

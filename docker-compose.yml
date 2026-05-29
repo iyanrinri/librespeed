@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  librespeed:
+    image: lscr.io/linuxserver/librespeed:latest
+    container_name: librespeed
+    environment:
+      - PUID=1000 # Sesuaikan dengan UID user Linux Anda jika diperlukan
+      - PGID=1000 # Sesuaikan dengan GID user Linux Anda jika diperlukan
+      - TZ=Asia/Jakarta # Sesuaikan dengan zona waktu Anda
+      - PASSWORD=sp33d4dm1n # Ubah ini untuk password statistik (opsional)
+    volumes:
+      - ./config:/config
+    ports:
+      - 8090:80 # Anda bisa mengubah 8080 ke port lain jika port tersebut sudah terpakai
+    restart: unless-stopped
+
