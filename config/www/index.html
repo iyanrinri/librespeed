@@ -4,16 +4,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no" />
 <meta charset="UTF-8" />
 <link rel="shortcut icon" href="favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script type="text/javascript" src="speedtest.js"></script>
 <script type="text/javascript">
 function I(i){return document.getElementById(i);}
 //INITIALIZE SPEEDTEST
 var s=new Speedtest(); //create speedtest object
 s.setParameter("telemetry_level","basic"); //enable telemetry
-var meterBk=/Trident.*rv:(\d+\.\d+)/i.test(navigator.userAgent)?"#EAEAEA":"#80808040";
-var dlColor="#6060AA",
-	ulColor="#616161";
-var progColor=meterBk;
+
+// Minimalist Colors
+var meterBk="rgba(255, 255, 255, 0.08)";
+var dlColor="#00e5ff", // Bright Cyan
+	ulColor="#b000ff"; // Vivid Purple
+var progColor="rgba(255, 255, 255, 0.1)";
+
 //CODE FOR GAUGES
 function drawMeter(c,amount,bk,fg,progress,prog){
 	var ctx=c.getContext("2d");
@@ -26,19 +30,34 @@ function drawMeter(c,amount,bk,fg,progress,prog){
 		c.width=cw;
 		c.height=ch;
 	}
+    
+    // Draw background track
 	ctx.beginPath();
 	ctx.strokeStyle=bk;
-	ctx.lineWidth=12*sizScale;
+	ctx.lineWidth=6*sizScale; // Thinner elegant line
+    ctx.lineCap="round";
+    ctx.shadowBlur=0;
 	ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,Math.PI*0.1);
 	ctx.stroke();
+
+    // Draw active track with glow
 	ctx.beginPath();
 	ctx.strokeStyle=fg;
-	ctx.lineWidth=12*sizScale;
+	ctx.lineWidth=6*sizScale;
+    ctx.lineCap="round";
+    // Add glow effect
+    ctx.shadowBlur=20*sizScale;
+    ctx.shadowColor=fg;
 	ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,amount*Math.PI*1.2-Math.PI*1.1);
 	ctx.stroke();
+    
+    // Reset shadow
+    ctx.shadowBlur=0;
+
+    // Optional progress bar at bottom
 	if(typeof progress !== "undefined"){
 		ctx.fillStyle=prog;
-		ctx.fillRect(c.width*0.3,c.height-16*sizScale,c.width*0.4*progress,4*sizScale);
+		ctx.fillRect(c.width*0.3,c.height-16*sizScale,c.width*0.4*progress,2*sizScale);
 	}
 }
 function mbpsToAmount(s){
@@ -50,6 +69,7 @@ function format(d){
     if(d<100) return d.toFixed(1);
     return d.toFixed(0);
 }
+
 //UI CODE
 var uiData=null;
 function startStop(){
@@ -57,20 +77,19 @@ function startStop(){
 		//speedtest is running, abort
 		s.abort();
 		data=null;
-		I("startStopBtn").className="";
+		I("startStopBtn").classList.remove("running");
 		initUI();
 	}else{
 		//test is not running, begin
-		I("startStopBtn").className="running";
+		I("startStopBtn").classList.add("running");
 		I("shareArea").style.display="none";
 		s.onupdate=function(data){
             uiData=data;
 		};
 		s.onend=function(aborted){
-            I("startStopBtn").className="";
+            I("startStopBtn").classList.remove("running");
             updateUI(true);
             if(!aborted){
-                //if testId is present, show sharing panel, otherwise do nothing
                 try{
                     var testId=uiData.testId;
                     if(testId!=null){
@@ -78,7 +97,7 @@ function startStop(){
                         I("resultsImg").src=shareURL;
                         I("resultsURL").value=shareURL;
                         I("testId").innerHTML=testId;
-                        I("shareArea").style.display="";
+                        I("shareArea").style.display="block";
                     }
                 }catch(e){}
             }
@@ -86,7 +105,6 @@ function startStop(){
 		s.start();
 	}
 }
-//this function reads the data sent back by the test and updates the UI
 function updateUI(forced){
 	if(!forced&&s.getState()!=3) return;
 	if(uiData==null) return;
@@ -102,14 +120,12 @@ function updateUI(forced){
 function oscillate(){
 	return 1+0.02*Math.sin(Date.now()/100);
 }
-//update the UI every frame
 window.requestAnimationFrame=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||(function(callback,element){setTimeout(callback,1000/60);});
 function frame(){
 	requestAnimationFrame(frame);
 	updateUI();
 }
 frame(); //start frame loop
-//function to (re)initialize UI
 function initUI(){
 	drawMeter(I("dlMeter"),0,meterBk,dlColor,0);
 	drawMeter(I("ulMeter"),0,meterBk,ulColor,0);
@@ -121,201 +137,430 @@ function initUI(){
 }
 </script>
 <style type="text/css">
-	html,body{
-		border:none; padding:0; margin:0;
-		background:#FFFFFF;
-		color:#202020;
+	:root {
+		--bg-color: #050505; /* Deep black */
+		--card-bg: #0a0a0a;
+		--card-border: rgba(255, 255, 255, 0.08);
+		--text-main: #ffffff;
+		--text-muted: #888888;
+		--primary-cyan: #00e5ff;
+		--primary-purple: #b000ff;
 	}
-	body{
-		text-align:center;
-		font-family:"Roboto",sans-serif;
+
+	html, body {
+		margin: 0; padding: 0;
+		background-color: var(--bg-color);
+		color: var(--text-main);
+		font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
 	}
-	h1{
-		color:#404040;
+
+	h1 {
+		font-weight: 700;
+		font-size: 1.8em;
+		letter-spacing: -0.05em;
+		margin: 2em 0;
+		color: var(--text-main);
 	}
-	#startStopBtn{
-		display:inline-block;
-		margin:0 auto;
-		color:#6060AA;
-		background-color:rgba(0,0,0,0);
-		border:0.15em solid #6060FF;
-		border-radius:0.3em;
-		transition:all 0.3s;
-		box-sizing:border-box;
-		width:8em; height:3em;
-		line-height:2.7em;
-		cursor:pointer;
-		box-shadow: 0 0 0 rgba(0,0,0,0.1), inset 0 0 0 rgba(0,0,0,0.1);
+
+	#testWrapper {
+		width: 100%;
+		max-width: 800px;
+		padding: 0 1.5em;
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 	}
-	#startStopBtn:hover{
-		box-shadow: 0 0 2em rgba(0,0,0,0.1), inset 0 0 1em rgba(0,0,0,0.1);
+
+	/* Minimalist Card */
+	.app-container {
+		width: 100%;
+		background: var(--card-bg);
+		border: 1px solid var(--card-border);
+		border-radius: 20px;
+		padding: 3em 2em;
+		box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		box-sizing: border-box;
 	}
-	#startStopBtn.running{
-		background-color:#FF3030;
-		border-color:#FF6060;
-		color:#FFFFFF;
+
+	/* The perfectly centered Start button */
+	.btn-container {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 3.5em;
+		width: 100%;
 	}
-	#startStopBtn:before{
-		content:"Start";
+
+	#startStopBtn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #ffffff;
+		color: #000000;
+		border: none;
+		border-radius: 9999px;
+		width: 180px;
+		height: 48px;
+		font-family: inherit;
+		font-size: 0.95em;
+		font-weight: 600;
+		letter-spacing: 0.05em;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		box-shadow: 0 4px 14px 0 rgba(255, 255, 255, 0.15);
 	}
-	#startStopBtn.running:before{
-		content:"Abort";
+
+	#startStopBtn:hover {
+		transform: scale(1.02);
+		background: #f0f0f0;
+		box-shadow: 0 6px 20px rgba(255, 255, 255, 0.23);
 	}
-	#test{
-		margin-top:2em;
-		margin-bottom:12em;
+
+	#startStopBtn:active {
+		transform: scale(0.98);
 	}
-	div.testArea{
-		display:inline-block;
-		width:16em;
-		height:12.5em;
-		position:relative;
-		box-sizing:border-box;
+
+	#startStopBtn.running {
+		background: transparent;
+		color: #ff3b30;
+		border: 1px solid #ff3b30;
+		box-shadow: none;
 	}
-	div.testArea2{
-		display:inline-block;
-		width:14em;
-		height:7em;
-		position:relative;
-		box-sizing:border-box;
-		text-align:center;
+
+	#startStopBtn.running:hover {
+		background: rgba(255, 59, 48, 0.1);
 	}
-	div.testArea div.testName{
-		position:absolute;
-		top:0.1em; left:0;
-		width:100%;
-		font-size:1.4em;
-		z-index:9;
+
+	#startStopBtn::before {
+		content: "Start Test";
 	}
-	div.testArea2 div.testName{
-        display:block;
-        text-align:center;
-        font-size:1.4em;
+
+	#startStopBtn.running::before {
+		content: "Stop Test";
 	}
-	div.testArea div.meterText{
-		position:absolute;
-		bottom:1.55em; left:0;
-		width:100%;
-		font-size:2.5em;
-		z-index:9;
+
+	.stats-row {
+		display: flex;
+		width: 100%;
+		justify-content: center;
+		gap: 3em;
+		margin-bottom: 3.5em;
 	}
-	div.testArea2 div.meterText{
-        display:inline-block;
-        font-size:2.5em;
+
+	.stat-box {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 	}
-	div.meterText:empty:before{
-		content:"0.00";
+
+	.label {
+		font-size: 0.75em;
+		font-weight: 600;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		margin-bottom: 0.5em;
 	}
-	div.testArea div.unit{
-		position:absolute;
-		bottom:2em; left:0;
-		width:100%;
-		z-index:9;
+
+	.value-container {
+		display: flex;
+		align-items: baseline;
+		gap: 0.3em;
 	}
-	div.testArea2 div.unit{
-		display:inline-block;
+
+	.stat-value {
+		font-size: 2.2em;
+		font-weight: 500;
+		letter-spacing: -0.03em;
+		font-variant-numeric: tabular-nums;
 	}
-	div.testArea canvas{
-		position:absolute;
-		top:0; left:0; width:100%; height:100%;
-		z-index:1;
+
+	.stat-box .stat-value:empty::before {
+		content: "0.00";
+		color: rgba(255, 255, 255, 0.2);
 	}
-	div.testGroup{
-		display:block;
-        margin: 0 auto;
+
+	.unit {
+		font-size: 0.8em;
+		font-weight: 500;
+		color: var(--text-muted);
 	}
-	#shareArea{
-		width:95%;
-		max-width:40em;
-		margin:0 auto;
-		margin-top:2em;
+
+	#pingText { color: var(--primary-cyan); }
+	#jitText { color: var(--text-main); }
+
+	.gauges-row {
+		display: flex;
+		width: 100%;
+		justify-content: center;
+		gap: 4em;
 	}
-	#shareArea > *{
-		display:block;
-		width:100%;
-		height:auto;
-		margin: 0.25em 0;
+
+	.gauge-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		position: relative;
+		width: 14em;
+		height: 12em;
 	}
-	#privacyPolicy{
-        position:fixed;
-        top:2em;
-        bottom:2em;
-        left:2em;
-        right:2em;
-        overflow-y:auto;
-        width:auto;
-        height:auto;
-        box-shadow:0 0 3em 1em #000000;
-        z-index:999999;
-        text-align:left;
-        background-color:#FFFFFF;
-        padding:1em;
+
+	.gauge-container .label {
+		position: absolute;
+		top: 0;
 	}
-	a.privacy{
-        text-align:center;
-        font-size:0.8em;
-        color:#808080;
-        display:block;
+
+	.gauge-container canvas {
+		position: absolute;
+		top: 1.5em; left: 0; width: 100%; height: 100%;
+		z-index: 1;
 	}
-	@media all and (max-width:40em){
-		body{
-			font-size:0.8em;
+
+	.gauge-container .value-container {
+		position: absolute;
+		bottom: 1.5em;
+		z-index: 2;
+	}
+
+	.gauge-container .stat-value {
+		font-size: 2.8em;
+		font-weight: 400;
+	}
+
+	.gauge-container .unit {
+		position: absolute;
+		bottom: -0.2em;
+	}
+
+	#ipArea {
+		margin-top: 3.5em;
+		font-size: 0.85em;
+		color: var(--text-muted);
+		display: flex;
+		align-items: center;
+		gap: 0.5em;
+	}
+
+	#ip {
+		color: var(--text-main);
+		font-weight: 500;
+	}
+
+	#shareArea {
+		margin-top: 2em;
+		width: 100%;
+		border-top: 1px solid var(--card-border);
+		padding-top: 2em;
+		text-align: center;
+	}
+
+	#shareArea h3 {
+		font-size: 1em;
+		font-weight: 500;
+		margin-bottom: 1em;
+	}
+
+	#resultsURL {
+		width: 100%;
+		max-width: 400px;
+		padding: 0.8em 1em;
+		background: #000;
+		border: 1px solid var(--card-border);
+		color: var(--text-main);
+		border-radius: 8px;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+		font-size: 0.85em;
+		cursor: pointer;
+		outline: none;
+		transition: border-color 0.2s;
+	}
+
+	#resultsURL:focus, #resultsURL:hover {
+		border-color: rgba(255, 255, 255, 0.3);
+	}
+
+	#resultsImg {
+		margin-top: 1.5em;
+		max-width: 100%;
+		border-radius: 8px;
+		border: 1px solid var(--card-border);
+	}
+
+	.footer-links {
+		margin: 2.5em 0;
+		display: flex;
+		gap: 1.5em;
+	}
+
+	.footer-links a {
+		font-size: 0.85em;
+		color: var(--text-muted);
+		text-decoration: none;
+		transition: color 0.2s;
+	}
+
+	.footer-links a:hover {
+		color: var(--text-main);
+	}
+
+	/* Minimal Modal */
+	#privacyPolicy {
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 90%;
+		max-width: 500px;
+		max-height: 85vh;
+		overflow-y: auto;
+		background: #111;
+		border: 1px solid var(--card-border);
+		border-radius: 16px;
+		padding: 2em;
+		box-shadow: 0 40px 80px rgba(0,0,0,0.8);
+		z-index: 999999;
+	}
+
+	#privacyPolicy h2 {
+		font-size: 1.2em;
+		margin-top: 0;
+		margin-bottom: 1.5em;
+	}
+
+	#privacyPolicy h4 {
+		font-size: 0.9em;
+		color: var(--text-main);
+		margin-top: 1.5em;
+	}
+
+	#privacyPolicy p, #privacyPolicy ul {
+		font-size: 0.85em;
+		color: var(--text-muted);
+		line-height: 1.6;
+	}
+
+	.close-btn {
+		display: block;
+		width: 100%;
+		padding: 0.8em;
+		margin-top: 2em;
+		background: #222;
+		color: #fff;
+		border: none;
+		border-radius: 8px;
+		font-weight: 500;
+		cursor: pointer;
+		text-align: center;
+		text-decoration: none;
+		transition: background 0.2s;
+	}
+
+	.close-btn:hover {
+		background: #333;
+	}
+
+	@media (max-width: 600px) {
+		.app-container {
+			padding: 2em 1em;
+			border-radius: 16px;
+		}
+		.gauges-row {
+			flex-direction: column;
+			gap: 2em;
+		}
+		.stats-row {
+			gap: 2em;
 		}
 	}
 </style>
-<title>LibreSpeed Speedtest</title>
+<title>LibreSpeed</title>
 </head>
 <body>
-<h1>LibreSpeed Speedtest</h1>
+
+<h1>LibreSpeed</h1>
+
 <div id="testWrapper">
-	<div id="startStopBtn" onclick="startStop()"></div><br/>
-	<a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
-	<div id="test">
-		<div class="testGroup">
-			<div class="testArea2">
-				<div class="testName">Ping</div>
-				<div id="pingText" class="meterText" style="color:#AA6060"></div>
-				<div class="unit">ms</div>
-			</div>
-			<div class="testArea2">
-				<div class="testName">Jitter</div>
-				<div id="jitText" class="meterText" style="color:#AA6060"></div>
-				<div class="unit">ms</div>
-			</div>
+	<div class="app-container">
+		
+		<div class="btn-container">
+			<button id="startStopBtn" onclick="startStop()"></button>
 		</div>
-		<div class="testGroup">
-			<div class="testArea">
-				<div class="testName">Download</div>
-				<canvas id="dlMeter" class="meter"></canvas>
-				<div id="dlText" class="meterText"></div>
-				<div class="unit">Mbps</div>
+		
+		<div id="test" style="width:100%">
+			<div class="stats-row">
+				<div class="stat-box">
+					<div class="label">Ping</div>
+					<div class="value-container">
+						<div id="pingText" class="stat-value"></div>
+						<div class="unit">ms</div>
+					</div>
+				</div>
+				<div class="stat-box">
+					<div class="label">Jitter</div>
+					<div class="value-container">
+						<div id="jitText" class="stat-value"></div>
+						<div class="unit">ms</div>
+					</div>
+				</div>
 			</div>
-			<div class="testArea">
-				<div class="testName">Upload</div>
-				<canvas id="ulMeter" class="meter"></canvas>
-				<div id="ulText" class="meterText"></div>
-				<div class="unit">Mbps</div>
+
+			<div class="gauges-row">
+				<div class="gauge-container">
+					<div class="label">Download</div>
+					<canvas id="dlMeter"></canvas>
+					<div class="value-container">
+						<div id="dlText" class="stat-value"></div>
+					</div>
+					<div class="unit">Mbps</div>
+				</div>
+				<div class="gauge-container">
+					<div class="label">Upload</div>
+					<canvas id="ulMeter"></canvas>
+					<div class="value-container">
+						<div id="ulText" class="stat-value"></div>
+					</div>
+					<div class="unit">Mbps</div>
+				</div>
 			</div>
-		</div>
-		<div id="ipArea">
-			<span id="ip"></span>
-		</div>
-		<div id="shareArea" style="display:none">
-			<h3>Share results</h3>
-			<p>Test ID: <span id="testId"></span></p>
-			<input type="text" value="" id="resultsURL" readonly="readonly" onclick="this.select();this.focus();this.select();document.execCommand('copy');alert('Link copied')"/>
-			<img src="" id="resultsImg" />
+
+			<div id="ipArea" style="justify-content: center;">
+				Client IP <span id="ip"></span>
+			</div>
+
+			<div id="shareArea" style="display:none">
+				<h3>Share Result</h3>
+				<div style="margin-bottom:1em; font-size:0.85em; color:var(--text-muted)">
+					Test ID: <span id="testId" style="color:var(--text-main)"></span>
+				</div>
+				<input type="text" value="" id="resultsURL" readonly="readonly" onclick="this.select();this.focus();this.select();document.execCommand('copy');alert('Link copied to clipboard')"/>
+				<img src="" id="resultsImg" />
+			</div>
 		</div>
 	</div>
-	<a href="https://github.com/librespeed/speedtest">Source code</a>
+
+	<div class="footer-links">
+		<a href="#" onclick="I('privacyPolicy').style.display='block'">Privacy Policy</a>
+		<a href="https://github.com/librespeed/speedtest" target="_blank">Source Code</a>
+	</div>
 </div>
+
 <div id="privacyPolicy" style="display:none">
     <h2>Privacy Policy</h2>
     <p>This HTML5 Speedtest server is configured with telemetry enabled.</p>
     <h4>What data we collect</h4>
     <p>
         At the end of the test, the following data is collected and stored:
-        <ul>
+        <ul style="padding-left: 1.5em; margin: 0.5em 0;">
             <li>Test ID</li>
             <li>Time of testing</li>
             <li>Test results (download and upload speed, ping and jitter)</li>
@@ -329,7 +574,7 @@ function initUI(){
     <h4>How we use the data</h4>
     <p>
         Data collected through this service is used to:
-        <ul>
+        <ul style="padding-left: 1.5em; margin: 0.5em 0;">
             <li>Allow sharing of test results (sharable image for forums, etc.)</li>
             <li>To improve the service offered to you (for instance, to detect problems on our side)</li>
         </ul>
@@ -344,8 +589,7 @@ function initUI(){
         If you want to have your information deleted, you need to provide either the ID of the test or your IP address. This is the only way to identify your data, without this information we won't be able to comply with your request.<br/><br/>
         Contact the web admin for all deletion requests.
     </p>
-    <br/><br/>
-    <a class="privacy" href="#" onclick="I('privacyPolicy').style.display='none'">Close</a><br/>
+    <a class="close-btn" href="#" onclick="I('privacyPolicy').style.display='none'">Close</a>
 </div>
 <script type="text/javascript">setTimeout(function(){initUI()},100);</script>
 </body>
