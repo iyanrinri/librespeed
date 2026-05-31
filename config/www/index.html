@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no" />
 <meta charset="UTF-8" />
 <link rel="shortcut icon" href="favicon.ico">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script type="text/javascript" src="speedtest.js"></script>
 <script type="text/javascript">
 function I(i){return document.getElementById(i);}
@@ -12,11 +12,11 @@ function I(i){return document.getElementById(i);}
 var s=new Speedtest(); //create speedtest object
 s.setParameter("telemetry_level","basic"); //enable telemetry
 
-// Minimalist Colors
-var meterBk="rgba(255, 255, 255, 0.08)";
-var dlColor="#00e5ff", // Bright Cyan
-	ulColor="#b000ff"; // Vivid Purple
-var progColor="rgba(255, 255, 255, 0.1)";
+// Colors matching modern aesthetic
+var meterBk="#1a1a2e";
+var dlColor="#00ffcc",
+	ulColor="#ff00ff";
+var progColor="#22223b";
 
 //CODE FOR GAUGES
 function drawMeter(c,amount,bk,fg,progress,prog){
@@ -32,61 +32,32 @@ function drawMeter(c,amount,bk,fg,progress,prog){
 	}
 
     var centerX = c.width/2;
-    var centerY = c.height - 58*sizScale;
-    var radius = c.height/1.8 - 6*sizScale;
-    var startAngle = -Math.PI*1.1;
-    var endAngle = Math.PI*0.1;
+    var centerY = c.height - 40*sizScale;
+    var radius = c.height/1.8 - 10*sizScale;
+    var startAngle = -Math.PI*1.2;
+    var endAngle = Math.PI*0.2;
     var totalAngle = endAngle - startAngle;
     
-    // Draw Speedometer Ticks
-    ctx.lineWidth = 2*sizScale;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-    for (var i = 0; i <= 10; i++) {
-        var angle = startAngle + (totalAngle * (i / 10));
-        var innerRadius = radius - 15*sizScale;
-        var outerRadius = radius - 5*sizScale;
-        if (i % 5 === 0) {
-            innerRadius = radius - 20*sizScale;
-            ctx.lineWidth = 3*sizScale;
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-        } else {
-            ctx.lineWidth = 2*sizScale;
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-        }
-        ctx.beginPath();
-        ctx.moveTo(centerX + innerRadius * Math.cos(angle), centerY + innerRadius * Math.sin(angle));
-        ctx.lineTo(centerX + outerRadius * Math.cos(angle), centerY + outerRadius * Math.sin(angle));
-        ctx.stroke();
-    }
-
     // Draw background track
 	ctx.beginPath();
 	ctx.strokeStyle=bk;
-	ctx.lineWidth=6*sizScale; // Thinner elegant line
+	ctx.lineWidth=12*sizScale;
     ctx.lineCap="round";
-    ctx.shadowBlur=0;
 	ctx.arc(centerX,centerY,radius,startAngle,endAngle);
 	ctx.stroke();
 
     // Draw active track with glow
 	ctx.beginPath();
 	ctx.strokeStyle=fg;
-	ctx.lineWidth=6*sizScale;
+	ctx.lineWidth=12*sizScale;
     ctx.lineCap="round";
-    // Add glow effect
-    ctx.shadowBlur=20*sizScale;
+    ctx.shadowBlur=15*sizScale;
     ctx.shadowColor=fg;
 	ctx.arc(centerX,centerY,radius,startAngle,startAngle + amount*totalAngle);
 	ctx.stroke();
     
     // Reset shadow
     ctx.shadowBlur=0;
-
-    // Optional progress bar at bottom
-	if(typeof progress !== "undefined"){
-		ctx.fillStyle=prog;
-		ctx.fillRect(c.width*0.3,c.height-16*sizScale,c.width*0.4*progress,2*sizScale);
-	}
 }
 function mbpsToAmount(s){
 	return 1-(1/(Math.pow(1.3,Math.sqrt(s))));
@@ -98,36 +69,6 @@ function format(d){
     return d.toFixed(0);
 }
 
-function formatSpeed(d) {
-    var bits = Number(d); // Mbps
-    var bytes = bits / 8; // MB/s
-    
-    var bitUnit = "Mbps";
-    if (bits >= 1000) {
-        bits = bits / 1000;
-        bitUnit = "Gbps";
-    } else if (bits > 0 && bits < 1) {
-        bits = bits * 1000;
-        bitUnit = "Kbps";
-    }
-
-    var byteUnit = "MB/s";
-    if (bytes >= 1000) {
-        bytes = bytes / 1000;
-        byteUnit = "GB/s";
-    } else if (bytes > 0 && bytes < 1) {
-        bytes = bytes * 1000;
-        byteUnit = "KB/s";
-    }
-
-    return {
-        bitsStr: (bits === 0) ? "0.00" : bits.toFixed(bits >= 100 ? 0 : (bits >= 10 ? 1 : 2)),
-        bitUnit: bitUnit,
-        bytesStr: (bytes === 0) ? "0.00" : bytes.toFixed(bytes >= 100 ? 0 : (bytes >= 10 ? 1 : 2)),
-        byteUnit: byteUnit
-    };
-}
-
 //UI CODE
 var uiData=null;
 function startStop(){
@@ -135,17 +76,20 @@ function startStop(){
 		//speedtest is running, abort
 		s.abort();
 		data=null;
-		I("startStopBtn").classList.remove("running");
+		I("startBtn").classList.remove("running");
+        I("startBtnText").textContent = "GO";
 		initUI();
 	}else{
 		//test is not running, begin
-		I("startStopBtn").classList.add("running");
+		I("startBtn").classList.add("running");
+        I("startBtnText").textContent = "STOP";
 		I("shareArea").style.display="none";
 		s.onupdate=function(data){
             uiData=data;
 		};
 		s.onend=function(aborted){
-            I("startStopBtn").classList.remove("running");
+            I("startBtn").classList.remove("running");
+            I("startBtnText").textContent = "AGAIN";
             updateUI(true);
             if(!aborted){
                 try{
@@ -155,7 +99,7 @@ function startStop(){
                         I("resultsImg").src=shareURL;
                         I("resultsURL").value=shareURL;
                         I("testId").innerHTML=testId;
-                        I("shareArea").style.display="block";
+                        I("shareArea").style.display="flex";
                     }
                 }catch(e){}
             }
@@ -168,33 +112,13 @@ function updateUI(forced){
 	if(uiData==null) return;
 	var status=uiData.testState;
 	I("ip").textContent=uiData.clientIp;
-
-    // Download format
-    if (status == 1 && uiData.dlStatus == 0) {
-        I("dlText").textContent = "...";
-        I("dlUnit").textContent = "Mbps";
-        I("dlBytes").textContent = "";
-    } else {
-        var dlFmt = formatSpeed(uiData.dlStatus);
-        I("dlText").textContent = dlFmt.bitsStr;
-        I("dlUnit").textContent = dlFmt.bitUnit;
-        I("dlBytes").textContent = dlFmt.bytesStr + " " + dlFmt.byteUnit;
-    }
+    if(uiData.ispInfo) I("isp").textContent=uiData.ispInfo;
+    else I("isp").textContent="Unknown ISP";
+    
+	I("dlText").textContent=(status==1&&uiData.dlStatus==0)?"...":format(uiData.dlStatus);
 	drawMeter(I("dlMeter"),mbpsToAmount(Number(uiData.dlStatus*(status==1?oscillate():1))),meterBk,dlColor,Number(uiData.dlProgress),progColor);
-
-    // Upload format
-    if (status == 3 && uiData.ulStatus == 0) {
-        I("ulText").textContent = "...";
-        I("ulUnit").textContent = "Mbps";
-        I("ulBytes").textContent = "";
-    } else {
-        var ulFmt = formatSpeed(uiData.ulStatus);
-        I("ulText").textContent = ulFmt.bitsStr;
-        I("ulUnit").textContent = ulFmt.bitUnit;
-        I("ulBytes").textContent = ulFmt.bytesStr + " " + ulFmt.byteUnit;
-    }
+	I("ulText").textContent=(status==3&&uiData.ulStatus==0)?"...":format(uiData.ulStatus);
 	drawMeter(I("ulMeter"),mbpsToAmount(Number(uiData.ulStatus*(status==3?oscillate():1))),meterBk,ulColor,Number(uiData.ulProgress),progColor);
-
 	I("pingText").textContent=format(uiData.pingStatus);
 	I("jitText").textContent=format(uiData.jitterStatus);
 }
@@ -211,192 +135,201 @@ function initUI(){
 	drawMeter(I("dlMeter"),0,meterBk,dlColor,0);
 	drawMeter(I("ulMeter"),0,meterBk,ulColor,0);
 	I("dlText").textContent="";
-    I("dlUnit").textContent="Mbps";
-    I("dlBytes").textContent="";
 	I("ulText").textContent="";
-    I("ulUnit").textContent="Mbps";
-    I("ulBytes").textContent="";
 	I("pingText").textContent="";
 	I("jitText").textContent="";
 	I("ip").textContent="";
+    I("isp").textContent="";
 }
 </script>
 <style type="text/css">
 	:root {
-		--bg-color: #050505; /* Deep black */
-		--card-bg: #0a0a0a;
-		--card-border: rgba(255, 255, 255, 0.08);
-		--text-main: #ffffff;
-		--text-muted: #888888;
-		--primary-cyan: #00e5ff;
-		--primary-purple: #b000ff;
+		--bg: #0f1015;
+		--panel-bg: #16171f;
+		--text: #ffffff;
+		--text-muted: #8e8e99;
+		--primary: #00ffcc;
+		--secondary: #ff00ff;
+        --border: #2a2b36;
 	}
 
 	html, body {
 		margin: 0; padding: 0;
-		background-color: var(--bg-color);
-		color: var(--text-main);
-		font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+		background-color: var(--bg);
+		color: var(--text);
+		font-family: 'Montserrat', sans-serif;
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		-webkit-font-smoothing: antialiased;
-		-moz-osx-font-smoothing: grayscale;
 	}
 
-	.glow-title {
-		font-weight: 800;
-		font-size: 2.5em;
-		letter-spacing: -0.05em;
-		margin: 1.5em 0;
-		color: transparent;
-        background: linear-gradient(90deg, #00e5ff, #b000ff);
-        background-clip: text;
-        -webkit-background-clip: text;
-        text-shadow: 0 0 20px rgba(176, 0, 255, 0.3);
-        text-transform: uppercase;
+    .brand {
+        position: absolute;
+        top: 30px;
+        left: 40px;
+        font-size: 1.5em;
+        font-weight: 700;
+        letter-spacing: 2px;
         display: flex;
         align-items: center;
-        gap: 0.3em;
-	}
+        gap: 10px;
+    }
+    .brand-icon {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 50%;
+        display: inline-block;
+    }
 
 	#testWrapper {
 		width: 100%;
-		max-width: 800px;
-		padding: 0 1.5em;
-		box-sizing: border-box;
+		max-width: 900px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+	}
+
+	.main-panel {
+		width: 100%;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 	}
 
-	/* Minimalist Card */
-	.app-container {
-		width: 100%;
-		background: var(--card-bg);
-		border: 1px solid var(--card-border);
-		border-radius: 20px;
-		padding: 3em 2em;
-		box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+    .top-stats {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 40px;
+    }
+
+    .stat-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .stat-group.right {
+        align-items: flex-end;
+    }
+
+    .stat-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9em;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label .icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .stat-value-container {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+    }
+
+    .stat-value {
+        font-size: 2.5em;
+        font-weight: 400;
+        line-height: 1;
+    }
+    .stat-value:empty::before {
+        content: "--";
+        color: rgba(255,255,255,0.1);
+    }
+
+    .stat-unit {
+        font-size: 1em;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+	.action-area {
+		position: relative;
+		width: 300px;
+		height: 300px;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		box-sizing: border-box;
+		justify-content: center;
+		margin: 20px 0 60px 0;
 	}
 
-	/* The perfectly centered Start button */
-	.btn-container {
+    /* The GO Button */
+    .start-btn {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: transparent;
+        border: 4px solid var(--primary);
+        color: var(--primary);
+        font-size: 2.5em;
+        font-weight: 300;
+        cursor: pointer;
+        outline: none;
+        position: relative;
+        z-index: 10;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.2), inset 0 0 20px rgba(0, 255, 204, 0.2);
+    }
+
+    .start-btn:hover {
+        transform: scale(1.05);
+        background: rgba(0, 255, 204, 0.1);
+        box-shadow: 0 0 40px rgba(0, 255, 204, 0.4), inset 0 0 30px rgba(0, 255, 204, 0.4);
+    }
+
+    .start-btn:active {
+        transform: scale(0.95);
+    }
+
+    .start-btn.running {
+        border-color: #ff3b30;
+        color: #ff3b30;
+        box-shadow: 0 0 20px rgba(255, 59, 48, 0.2), inset 0 0 20px rgba(255, 59, 48, 0.2);
+    }
+
+    .start-btn.running:hover {
+        background: rgba(255, 59, 48, 0.1);
+        box-shadow: 0 0 40px rgba(255, 59, 48, 0.4), inset 0 0 30px rgba(255, 59, 48, 0.4);
+    }
+
+    /* Rings animation */
+    .ring {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.05);
+        pointer-events: none;
+    }
+    .ring-1 { width: 220px; height: 220px; }
+    .ring-2 { width: 280px; height: 280px; }
+    .ring-3 { width: 340px; height: 340px; }
+
+	.meters-row {
 		display: flex;
-		justify-content: center;
-		margin-bottom: 3.5em;
+		justify-content: space-around;
 		width: 100%;
-	}
-
-	#startStopBtn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #ffffff;
-		color: #000000;
-		border: none;
-		border-radius: 9999px;
-		width: 180px;
-		height: 48px;
-		font-family: inherit;
-		font-size: 0.95em;
-		font-weight: 600;
-		letter-spacing: 0.05em;
-		cursor: pointer;
-		transition: all 0.2s ease;
-		box-shadow: 0 4px 14px 0 rgba(255, 255, 255, 0.15);
-	}
-
-	#startStopBtn:hover {
-		transform: scale(1.02);
-		background: #f0f0f0;
-		box-shadow: 0 6px 20px rgba(255, 255, 255, 0.23);
-	}
-
-	#startStopBtn:active {
-		transform: scale(0.98);
-	}
-
-	#startStopBtn.running {
-		background: transparent;
-		color: #ff3b30;
-		border: 1px solid #ff3b30;
-		box-shadow: none;
-	}
-
-	#startStopBtn.running:hover {
-		background: rgba(255, 59, 48, 0.1);
-	}
-
-	#startStopBtn::before {
-		content: "Start Test";
-	}
-
-	#startStopBtn.running::before {
-		content: "Stop Test";
-	}
-
-	.stats-row {
-		display: flex;
-		width: 100%;
-		justify-content: center;
-		gap: 3em;
-		margin-bottom: 3.5em;
-	}
-
-	.stat-box {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-	}
-
-	.label {
-		font-size: 0.75em;
-		font-weight: 600;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		margin-bottom: 0.5em;
-	}
-
-	.value-container {
-		display: flex;
-		align-items: baseline;
-		gap: 0.3em;
-	}
-
-	.stat-value {
-		font-size: 2.2em;
-		font-weight: 500;
-		letter-spacing: -0.03em;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.stat-box .stat-value:empty::before {
-		content: "0.00";
-		color: rgba(255, 255, 255, 0.2);
-	}
-
-	.unit {
-		font-size: 0.8em;
-		font-weight: 500;
-		color: var(--text-muted);
-	}
-
-	#pingText { color: var(--primary-cyan); }
-	#jitText { color: var(--text-main); }
-
-	.gauges-row {
-		display: flex;
-		width: 100%;
-		justify-content: center;
-		gap: 4em;
+        max-width: 800px;
+        margin-top: -20px;
 	}
 
 	.gauge-container {
@@ -404,318 +337,219 @@ function initUI(){
 		flex-direction: column;
 		align-items: center;
 		position: relative;
-		width: 14em;
-		height: 12em;
-	}
-
-	.gauge-container .label {
-		position: absolute;
-		top: 0;
+		width: 250px;
+		height: 180px;
 	}
 
 	.gauge-container canvas {
 		position: absolute;
-		top: 1.5em; left: 0; width: 100%; height: 100%;
+		top: 0; left: 0; width: 100%; height: 100%;
 		z-index: 1;
 	}
 
 	.gauge-container .value-container {
 		position: absolute;
-		bottom: 1.5em;
+		bottom: 20px;
 		z-index: 2;
         display: flex;
         flex-direction: column;
         align-items: center;
 	}
     
-    .gauge-container .bits-container {
-        display: flex;
-        align-items: baseline;
-        gap: 0.3em;
+    .gauge-container .stat-value {
+        font-size: 2.2em;
+        font-weight: 300;
     }
 
-	.gauge-container .stat-value {
-		font-size: 2.8em;
-		font-weight: 400;
-	}
-    
-    .gauge-container .stat-value:empty::before {
-		content: "0.00";
-		color: rgba(255, 255, 255, 0.2);
-	}
-
-	.gauge-container .unit {
-        position: relative;
-        bottom: 0.1em;
-	}
-
-    .gauge-container .bytes-value {
-        font-size: 0.85em;
-        font-weight: 500;
+    .gauge-label {
+        font-size: 0.9em;
+        font-weight: 600;
         color: var(--text-muted);
-        margin-top: 0.2em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 15px;
     }
 
-	#ipArea {
-		margin-top: 3.5em;
-		font-size: 0.85em;
-		color: var(--text-muted);
-		display: flex;
-		align-items: center;
-		gap: 0.5em;
-	}
+    .bottom-info {
+        margin-top: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9em;
+        color: var(--text-muted);
+        background: var(--panel-bg);
+        padding: 15px 30px;
+        border-radius: 30px;
+        border: 1px solid var(--border);
+    }
+    
+    .bottom-info .info-row {
+        display: flex;
+        gap: 20px;
+    }
 
-	#ip {
-		color: var(--text-main);
-		font-weight: 500;
-	}
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-	#shareArea {
-		margin-top: 2em;
-		width: 100%;
-		border-top: 1px solid var(--card-border);
-		padding-top: 2em;
-		text-align: center;
-	}
+    .info-item .icon {
+        color: var(--primary);
+    }
 
-	#shareArea h3 {
-		font-size: 1em;
-		font-weight: 500;
-		margin-bottom: 1em;
-	}
+    .info-val {
+        color: var(--text);
+        font-weight: 500;
+    }
 
-	#resultsURL {
-		width: 100%;
-		max-width: 400px;
-		padding: 0.8em 1em;
-		background: #000;
-		border: 1px solid var(--card-border);
-		color: var(--text-main);
-		border-radius: 8px;
-		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-		font-size: 0.85em;
-		cursor: pointer;
-		outline: none;
-		transition: border-color 0.2s;
-	}
+    #shareArea {
+        margin-top: 40px;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        background: var(--panel-bg);
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        width: 100%;
+        max-width: 600px;
+    }
+    
+    #shareArea h3 {
+        margin-top: 0;
+        font-weight: 500;
+    }
 
-	#resultsURL:focus, #resultsURL:hover {
-		border-color: rgba(255, 255, 255, 0.3);
-	}
+    .share-input-wrapper {
+        display: flex;
+        width: 100%;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
 
-	#resultsImg {
-		margin-top: 1.5em;
-		max-width: 100%;
-		border-radius: 8px;
-		border: 1px solid var(--card-border);
-        /* 
-           This CSS filter will invert the light background to dark, 
-           and preserve the hue, resulting in a dark-mode share image! 
-        */
-        filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.1);
-	}
+    #resultsURL {
+        flex: 1;
+        background: #000;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.9em;
+        outline: none;
+    }
 
-	.footer-links {
-		margin: 2.5em 0;
-		display: flex;
-		gap: 1.5em;
-	}
+    #resultsURL:focus {
+        border-color: var(--primary);
+    }
 
-	.footer-links a {
-		font-size: 0.85em;
-		color: var(--text-muted);
-		text-decoration: none;
-		transition: color 0.2s;
-	}
+    #resultsImg {
+        max-width: 100%;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+    }
 
-	.footer-links a:hover {
-		color: var(--text-main);
-	}
-
-	/* Minimal Modal */
-	#privacyPolicy {
-		position: fixed;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 90%;
-		max-width: 500px;
-		max-height: 85vh;
-		overflow-y: auto;
-		background: #111;
-		border: 1px solid var(--card-border);
-		border-radius: 16px;
-		padding: 2em;
-		box-shadow: 0 40px 80px rgba(0,0,0,0.8);
-		z-index: 999999;
-	}
-
-	#privacyPolicy h2 {
-		font-size: 1.2em;
-		margin-top: 0;
-		margin-bottom: 1.5em;
-	}
-
-	#privacyPolicy h4 {
-		font-size: 0.9em;
-		color: var(--text-main);
-		margin-top: 1.5em;
-	}
-
-	#privacyPolicy p, #privacyPolicy ul {
-		font-size: 0.85em;
-		color: var(--text-muted);
-		line-height: 1.6;
-	}
-
-	.close-btn {
-		display: block;
-		width: 100%;
-		padding: 0.8em;
-		margin-top: 2em;
-		background: #222;
-		color: #fff;
-		border: none;
-		border-radius: 8px;
-		font-weight: 500;
-		cursor: pointer;
-		text-align: center;
-		text-decoration: none;
-		transition: background 0.2s;
-	}
-
-	.close-btn:hover {
-		background: #333;
-	}
-
-	@media (max-width: 600px) {
-		.app-container {
-			padding: 2em 1em;
-			border-radius: 16px;
-		}
-		.gauges-row {
+	@media (max-width: 700px) {
+        .brand {
+            top: 20px;
+            left: 20px;
+        }
+        .top-stats {
+            padding-top: 60px;
+        }
+		.meters-row {
 			flex-direction: column;
-			gap: 2em;
-		}
-		.stats-row {
-			gap: 2em;
+            align-items: center;
+			gap: 40px;
 		}
 	}
 </style>
-<title>BroMN Speed Test</title>
+<title>SpeedTest by BroMN</title>
 </head>
 <body>
 
-<h1 class="glow-title">⚡ BroMN Speed Test</h1>
+<div class="brand">
+    <div class="brand-icon"></div>
+    BROMN
+</div>
 
 <div id="testWrapper">
-	<div class="app-container">
-		
-		<div class="btn-container">
-			<button id="startStopBtn" onclick="startStop()"></button>
-		</div>
-		
-		<div id="test" style="width:100%">
-			<div class="stats-row">
-				<div class="stat-box">
-					<div class="label">Ping</div>
-					<div class="value-container">
-						<div id="pingText" class="stat-value"></div>
-						<div class="unit">ms</div>
-					</div>
-				</div>
-				<div class="stat-box">
-					<div class="label">Jitter</div>
-					<div class="value-container">
-						<div id="jitText" class="stat-value"></div>
-						<div class="unit">ms</div>
-					</div>
-				</div>
-			</div>
+    <div class="top-stats">
+        <div class="stat-group">
+            <div class="stat-label">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Ping
+            </div>
+            <div class="stat-value-container">
+                <div id="pingText" class="stat-value"></div>
+                <div class="stat-unit">ms</div>
+            </div>
+        </div>
+        <div class="stat-group right">
+            <div class="stat-label">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+                Jitter
+            </div>
+            <div class="stat-value-container">
+                <div id="jitText" class="stat-value"></div>
+                <div class="stat-unit">ms</div>
+            </div>
+        </div>
+    </div>
 
-			<div class="gauges-row">
-				<div class="gauge-container">
-					<div class="label">Download</div>
-					<canvas id="dlMeter"></canvas>
-					<div class="value-container">
-                        <div class="bits-container">
-                            <div id="dlText" class="stat-value"></div>
-                            <div id="dlUnit" class="unit">Mbps</div>
-                        </div>
-                        <div id="dlBytes" class="bytes-value"></div>
-					</div>
-				</div>
-				<div class="gauge-container">
-					<div class="label">Upload</div>
-					<canvas id="ulMeter"></canvas>
-					<div class="value-container">
-						<div class="bits-container">
-                            <div id="ulText" class="stat-value"></div>
-                            <div id="ulUnit" class="unit">Mbps</div>
-                        </div>
-                        <div id="ulBytes" class="bytes-value"></div>
-					</div>
-				</div>
-			</div>
+    <div class="action-area">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <button id="startBtn" class="start-btn" onclick="startStop()">
+            <span id="startBtnText">GO</span>
+        </button>
+    </div>
 
-			<div id="ipArea" style="justify-content: center;">
-				Client IP <span id="ip"></span>
-			</div>
+    <div class="meters-row">
+        <div class="gauge-container">
+            <canvas id="dlMeter"></canvas>
+            <div class="value-container">
+                <div id="dlText" class="stat-value"></div>
+                <div class="stat-unit">Mbps</div>
+            </div>
+            <div class="gauge-label">Download</div>
+        </div>
+        <div class="gauge-container">
+            <canvas id="ulMeter"></canvas>
+            <div class="value-container">
+                <div id="ulText" class="stat-value"></div>
+                <div class="stat-unit">Mbps</div>
+            </div>
+            <div class="gauge-label">Upload</div>
+        </div>
+    </div>
 
-			<div id="shareArea" style="display:none">
-				<h3>Share Result</h3>
-				<div style="margin-bottom:1em; font-size:0.85em; color:var(--text-muted)">
-					Test ID: <span id="testId" style="color:var(--text-main)"></span>
-				</div>
-				<input type="text" value="" id="resultsURL" readonly="readonly" onclick="this.select();this.focus();this.select();document.execCommand('copy');alert('Link copied to clipboard')"/>
-				<img src="" id="resultsImg" />
-			</div>
-		</div>
-	</div>
+    <div class="bottom-info">
+        <div class="info-row">
+            <div class="info-item">
+                <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                <span id="ip" class="info-val"></span>
+            </div>
+            <div class="info-item">
+                <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                <span id="isp" class="info-val"></span>
+            </div>
+        </div>
+    </div>
 
-	<div class="footer-links">
-		<a href="#" onclick="I('privacyPolicy').style.display='block'">Privacy Policy</a>
-		<a href="https://github.com/librespeed/speedtest" target="_blank">Source Code</a>
-	</div>
+    <div id="shareArea">
+        <h3>Share Your Result</h3>
+        <div class="share-input-wrapper">
+            <input type="text" id="resultsURL" readonly onclick="this.select();document.execCommand('copy');" />
+        </div>
+        <img id="resultsImg" src="" alt="Speedtest Result" />
+    </div>
+
 </div>
 
-<div id="privacyPolicy" style="display:none">
-    <h2>Privacy Policy</h2>
-    <p>This HTML5 Speedtest server is configured with telemetry enabled.</p>
-    <h4>What data we collect</h4>
-    <p>
-        At the end of the test, the following data is collected and stored:
-        <ul style="padding-left: 1.5em; margin: 0.5em 0;">
-            <li>Test ID</li>
-            <li>Time of testing</li>
-            <li>Test results (download and upload speed, ping and jitter)</li>
-            <li>IP address</li>
-            <li>ISP information</li>
-            <li>Approximate location (inferred from IP address, not GPS)</li>
-            <li>User agent and browser locale</li>
-            <li>Test log (contains no personal information)</li>
-        </ul>
-    </p>
-    <h4>How we use the data</h4>
-    <p>
-        Data collected through this service is used to:
-        <ul style="padding-left: 1.5em; margin: 0.5em 0;">
-            <li>Allow sharing of test results (sharable image for forums, etc.)</li>
-            <li>To improve the service offered to you (for instance, to detect problems on our side)</li>
-        </ul>
-        No personal information is disclosed to third parties.
-    </p>
-    <h4>Your consent</h4>
-    <p>
-        By starting the test, you consent to the terms of this privacy policy.
-    </p>
-    <h4>Data removal</h4>
-    <p>
-        If you want to have your information deleted, you need to provide either the ID of the test or your IP address. This is the only way to identify your data, without this information we won't be able to comply with your request.<br/><br/>
-        Contact the web admin for all deletion requests.
-    </p>
-    <a class="close-btn" href="#" onclick="I('privacyPolicy').style.display='none'">Close</a>
-</div>
 <script type="text/javascript">setTimeout(function(){initUI()},100);</script>
 </body>
 </html>
