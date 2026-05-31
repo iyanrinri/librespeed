@@ -11,6 +11,8 @@ function I(i){return document.getElementById(i);}
 //INITIALIZE SPEEDTEST
 var s=new Speedtest(); //create speedtest object
 s.setParameter("telemetry_level","basic"); //enable telemetry
+s.setParameter("getIp_ispInfo", true); //enable ISP info
+s.setParameter("getIp_ispInfo_distance", "km"); //enable distance (optional)
 
 // Colors matching modern aesthetic
 var meterBk="#1a1a2e";
