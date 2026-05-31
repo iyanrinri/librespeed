@@ -116,24 +116,35 @@ function updateUI(forced){
 	var clientIp = uiData.clientIp;
     var ispInfo = uiData.ispInfo;
 
-    // Handle new JSON response format from getIP.php when ispInfo is enabled
-    if(clientIp && clientIp.startsWith("{")){
-        try {
-            var parsed = JSON.parse(clientIp);
-            if(parsed.processedString){
-                var parts = parsed.processedString.split(" - ");
-                clientIp = parts[0];
-                if(parts.length > 1 && !ispInfo) {
-                    ispInfo = parts[1];
+    // Handle JSON response format from getIP.php
+    if (typeof clientIp === 'object' && clientIp !== null) {
+        if (clientIp.rawIspInfo && clientIp.rawIspInfo.as_name) {
+            ispInfo = clientIp.rawIspInfo.as_name;
+        } else if (clientIp.processedString) {
+            var parts = clientIp.processedString.split(" - ");
+            if (parts.length > 1) ispInfo = parts[1];
+        }
+        clientIp = clientIp.processedString ? clientIp.processedString.split(" - ")[0] : "";
+    } else if (typeof clientIp === 'string') {
+        if (clientIp.startsWith("{")) {
+            try {
+                var parsed = JSON.parse(clientIp);
+                if (parsed.rawIspInfo && parsed.rawIspInfo.as_name) {
+                    ispInfo = parsed.rawIspInfo.as_name;
+                } else if (parsed.processedString) {
+                    var parts = parsed.processedString.split(" - ");
+                    if (parts.length > 1) ispInfo = parts[1];
                 }
-            }
-            if(parsed.rawIspInfo && parsed.rawIspInfo.as_name){
-                ispInfo = parsed.rawIspInfo.as_name;
-            }
-        } catch(e) {}
+                clientIp = parsed.processedString ? parsed.processedString.split(" - ")[0] : "";
+            } catch(e) {}
+        } else if (clientIp.indexOf(" - ") > -1) {
+            var parts = clientIp.split(" - ");
+            clientIp = parts[0];
+            ispInfo = parts[1];
+        }
     }
 
-	I("ip").textContent=clientIp || "";
+	I("ip").textContent = clientIp || "";
     if(ispInfo) I("isp").textContent=ispInfo;
     else I("isp").textContent="Unknown ISP";
     
