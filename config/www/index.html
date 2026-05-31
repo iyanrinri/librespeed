@@ -14,6 +14,12 @@ s.setParameter("telemetry_level","basic"); //enable telemetry
 s.setParameter("getIp_ispInfo", true); //enable ISP info
 s.setParameter("getIp_ispInfo_distance", "km"); //enable distance (optional)
 
+// Tuning for Gigabit speeds
+s.setParameter("garbagePhp_chunkSize", 100); // Increase download chunk size
+s.setParameter("emptyPhp_chunkSize", 100); // Increase upload chunk size
+s.setParameter("xhr_dlMultistream", 10); // Increase download streams (default 6)
+s.setParameter("xhr_ulMultistream", 10); // Increase upload streams (default 3)
+
 // Colors matching modern aesthetic
 var meterBk="#1a1a2e";
 var dlColor="#00ffcc",
