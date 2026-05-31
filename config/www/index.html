@@ -113,8 +113,28 @@ function updateUI(forced){
 	if(!forced&&s.getState()!=3) return;
 	if(uiData==null) return;
 	var status=uiData.testState;
-	I("ip").textContent=uiData.clientIp;
-    if(uiData.ispInfo) I("isp").textContent=uiData.ispInfo;
+	var clientIp = uiData.clientIp;
+    var ispInfo = uiData.ispInfo;
+
+    // Handle new JSON response format from getIP.php when ispInfo is enabled
+    if(clientIp && clientIp.startsWith("{")){
+        try {
+            var parsed = JSON.parse(clientIp);
+            if(parsed.processedString){
+                var parts = parsed.processedString.split(" - ");
+                clientIp = parts[0];
+                if(parts.length > 1 && !ispInfo) {
+                    ispInfo = parts[1];
+                }
+            }
+            if(parsed.rawIspInfo && parsed.rawIspInfo.as_name){
+                ispInfo = parsed.rawIspInfo.as_name;
+            }
+        } catch(e) {}
+    }
+
+	I("ip").textContent=clientIp || "";
+    if(ispInfo) I("isp").textContent=ispInfo;
     else I("isp").textContent="Unknown ISP";
     
 	I("dlText").textContent=(status==1&&uiData.dlStatus==0)?"...":format(uiData.dlStatus);
